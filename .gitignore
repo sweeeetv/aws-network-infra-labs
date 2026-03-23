@@ -30,3 +30,14 @@ Thumbs.db
 .vscode/
 
 # use git rm -r --cached <.DS_Store> to remove. 
+
+
+# for GO 
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+app
+app*
+*.test

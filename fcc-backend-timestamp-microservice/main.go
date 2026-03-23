@@ -63,7 +63,7 @@ func handleTimestamp(w http.ResponseWriter, r *http.Request) {
 //valid date → write JSON response with Unix and UTC
 	writeJSON(w, Response{
 		Unix: t.UnixMilli(),
-		UTC:  t.UTC().Format(time.RFC1123),
+		UTC:  t.UTC().Format("Mon, 02 Jan 2006 15:04:05 GMT"),
 	})
 }
 
@@ -95,3 +95,6 @@ func main() {
 	http.ListenAndServe(":3001", nil)
 
 }
+
+//GOOS=linux GOARCH=amd64 go build -o app .
+//compiling the files to go binary
