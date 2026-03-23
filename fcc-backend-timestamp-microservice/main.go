@@ -61,15 +61,33 @@ func handleTimestamp(w http.ResponseWriter, r *http.Request) {
 		if ms, e := strconv.ParseInt(dateStr, 10, 64); e == nil {
 			//if successful, convert ms to time.Time using time. 
 			t = time.UnixMilli(ms)
+			
 		} else {
-			//if NOT numeric → parse as date string
-			//2006-01-02 is not arbitrary. It is a specific date that Go uses as a reference for parsing date strings. If the input string matches this format, it will be successfully parsed into a time.Time object. If it doesn't match, an error will be returned.
-			t, err = time.Parse("2006-01-02", dateStr)
-			if err != nil {
-				writeJSON(w, Response{Error: "Invalid Date"})
-				return
-			}
-		}
+            // THE FIX: Loop through multiple date formats
+            layouts := []string{
+                "2006-01-02",                  // Format: 2015-12-25
+                "02 January 2006, MST",        // Format: 05 October 2011, GMT (The FCC test)
+                "02 Jan 2006",                 // Format: 25 Dec 2015
+                "January 2, 2006",             // Format: December 25, 2015
+                "Mon, 02 Jan 2006 15:04:05 MST", // Format: Full web string
+            }
+
+            parsedSuccessfully := false
+            
+            for _, layout := range layouts {
+                t, err = time.Parse(layout, dateStr)
+                if err == nil {
+                    parsedSuccessfully = true
+                    break // Found a match, stop checking
+                }
+            }
+
+            // If it failed all layouts, throw the error
+            if !parsedSuccessfully {
+                writeJSON(w, Response{Error: "Invalid Date"})
+                return
+            }
+        }
 	}
 //valid date → write JSON response with Unix and UTC
 	writeJSON(w, Response{
@@ -85,6 +103,7 @@ func handleTimestamp(w http.ResponseWriter, r *http.Request) {
 //sends bytes back to the client over HTTP. It sets the Content-Type header to application/json and encodes the Response struct as JSON in the response body. The object passed to json.NewEncoder(w).Encode() is the Response struct defined earlier, which contains the Unix timestamp, UTC string, and any error message if applicable. 
 ////The JSON encoder will convert this struct into a JSON string that the client can understand.
 func writeJSON(w http.ResponseWriter, resp Response) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }
