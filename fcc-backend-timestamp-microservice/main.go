@@ -21,13 +21,24 @@ type Response struct {
 	UTC  string `json:"utc,omitempty"`
 	Error string `json:"error,omitempty"`
 }
+func handleMainPage(w http.ResponseWriter, r *http.Request) {
+    // 1. The Catch-All Protection
+    if r.URL.Path != "/" {
+        http.NotFound(w, r)
+        return
+    }
 
-
+    // 2. The Response
+    w.Header().Set("Content-Type", "text/html")
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("<h1>Timestamp Microservice is Active</h1><p>Use /api/:date to test.</p>"))
+}
 //w -> http.ResponseWriter: an interface to write the HTTP response back to the client. set headers and write the response body using this.
 //r -> *http.Request: a pointer to an http.Request struct that contains all the information about the incoming HTTP request: Method, Body, URL, headers, and body.
 //app.get("/api/:date?", (req, res) => {
   // req → request
   // res → response});
+
 func handleTimestamp(w http.ResponseWriter, r *http.Request) {
 	//trim the prefix from the URL path FOR EXAMPLE: /api/2020-01-01, becomes "2020-01-01". /api/1609459200000 becomes "1609459200000".
 	path := strings.TrimPrefix(r.URL.Path, "/api")
@@ -83,13 +94,14 @@ func writeJSON(w http.ResponseWriter, resp Response) {
 func main() {
 	//HandleFunc -> stores mapping in a global routing table. Associates path prefix with a function. In this case, both "/api/" and "/api" paths are mapped to the handleTimestamp function.
 	println("Server starting on port 3001...")
+	http.HandleFunc("/", handleMainPage)
 	http.HandleFunc("/api/", handleTimestamp)
 	http.HandleFunc("/api", handleTimestamp)
 	//Handle -> serves static files from the specified directory. It maps the URL path "/public/" to the "./public" directory on the server. When a request is made to a URL starting with "/public/", the server will look for the corresponding file in the "./public" directory and serve it. For example, a request to "/public/image.png" will serve the file located at "./public/image.png". The http.StripPrefix function is used to remove the "/public/" prefix from the URL path before looking for the file in the directory.
-	http.Handle("/public/",
-		http.StripPrefix("/public/",
-			http.FileServer(http.Dir("./public"))))
-	http.Handle("/", http.FileServer(http.Dir("./views")))
+	// http.Handle("/public/",
+	// 	http.StripPrefix("/public/",
+	// 		http.FileServer(http.Dir("./public"))))
+	// http.Handle("/", http.FileServer(http.Dir("./views")))
 
 	//ListenAndServe -> starts the HTTP server on the specified address (":3000" means listen on all interfaces on port 3000). It blocks and runs indefinitely, handling incoming requests using the registered handlers. If there is an error starting the server, it will return an error.
 	http.ListenAndServe(":3001", nil)
